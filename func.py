@@ -45,23 +45,34 @@ def test(a,id_main,show_list = False,theta=0):
 
     for i in range(0,len(ship_ls)):
         
+        
         if id_list[i] != id_main:
             id = id_list[i]
             objectB = ship_ls[i]
+            #print(objectB.heading)
             results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
             str1 = 'cpa:' +str(round(results['cpa'],3)) + 'tcpa: '+ str(round(results['tcpa'],3))
             plt.plot(objectB.position[0],objectB.position[1] ,marker =get_arrow(90 -objectB.heading),color = 'orange', markersize=15)
             plt.text(objectB.position[0],objectB.position[1],str1)
             txt += str(id_list[i]) +" " + str1 + "\n"+ results['status']+'\n'
-            tcpa_dict[id] = results['cpa']
-
+            tcpa_dict[id] = abs(results['cpa'])
+    print(tcpa_dict)
     dic2=dict(sorted(tcpa_dict.items(),key= lambda x:x[1]))
+    print("-------")
+    print(dic2)
     res = list(dic2.keys())[0]
     for i in range(len(id_list)):
         if id_list[i]==res:
             objectB = ship_ls[i]
+            
+            # print(objectA.position)
+            # print("---------")
+            # print(objectB.position)
+            
             results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
+
             try:
+                print(results['coord'])
                 plt.plot(results['coord'][0],results['coord'][1] ,marker =get_arrow(90 -objectA.heading),color = 'red', markersize=15)
                 plt.text(results['coord'][0]+0.01,results['coord'][1],name)
                 plt.plot(results['coord'][2],results['coord'][3] ,marker =get_arrow(90 -objectB.heading),color = 'black', markersize=15)
@@ -103,4 +114,5 @@ def test(a,id_main,show_list = False,theta=0):
         text_box2.pack(expand=True)
 
         text_box2.insert('end', message)
+    print("ends")
     plt.show()

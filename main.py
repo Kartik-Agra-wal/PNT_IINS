@@ -9,8 +9,9 @@ from func import test
 
 id = 419565453
 
-a= [{'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus.Moored: 5>', 'turn': None, 'speed': 2.9, 'accuracy': False, 'lon': 72.882983, 'lat': 18.867343, 'course': 24.2, 'heading': 511, 'second': 1, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 49315},
+a= [{'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus.Moored: 5>', 'turn': None, 'speed': 2.9, 'accuracy': False, 'lon': 73.05, 'lat': 19.085, 'course': 270, 'heading': 511, 'second': 1, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 49315},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419565453, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': None, 'speed': 3, 'accuracy': False, 'lon': 73.05928, 'lat': 19.029358, 'course': 270.0, 'heading': 511, 'second': 3, 'maneuver': 0, 'spare_1': b'\x00', 'raim': True, 'radio': 262144},
+{'msg_type': 1, 'repeat': 0, 'mmsi': 419565458, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': None, 'speed': 3, 'accuracy': False, 'lon': 73.05, 'lat': 18.829358, 'course': 90.0, 'heading': 511, 'second': 3, 'maneuver': 0, 'spare_1': b'\x00', 'raim': True, 'radio': 262144},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419565453, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': None, 'speed': 3, 'accuracy': False, 'lon': 73.05928, 'lat': 19.029358, 'course': 360.0, 'heading': 511, 'second': 4, 'maneuver': 0, 'spare_1': b'\x00', 'raim': True, 'radio': 262144},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419000482, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': 0.0, 'speed': 1, 'accuracy': False, 'lon': 72.915798, 'lat': 18.949165, 'course': 50.4, 'heading': 317, 'second': 4, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 49376},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus.Moored: 5>', 'turn': None, 'speed': 3.0, 'accuracy': False, 'lon': 72.88296, 'lat': 18.86736, 'course': 35.7, 'heading': 511, 'second': 3, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 114852},

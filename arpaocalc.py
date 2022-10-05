@@ -21,6 +21,7 @@ TCPA result is expressed in minutes
 import math
 from math import sin,cos,asin,acos,sqrt,atan2,radians,pi,degrees
 from numbers import Number
+from traceback import print_tb
 
 
 class Ship:
@@ -64,7 +65,7 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
     if ((objectA_speed == objectB_speed) and (vectorA_angle == vectorB_angle)) or (objectA_speed <= 0.001 and objectB_speed <= 0.001):
         status = "Already at her minimum CPA"
         print("Already at her minimum CPA")
-        cpa = abs(round(calculate_distance(pointA,pointB), 2))
+        cpa = calculate_distance(pointA,pointB)
         
         if d_map == True:
             
@@ -85,7 +86,7 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
         if check_ship_going_away(pointA,vectorA_angle,pointB,vectorB_angle_relativ,objectB_speed_relative) == True :
             status  = "Ship going away,already at her minimum CPA"
             print("Ship going away, already at her minimum CPA")
-            cpa = abs(round(calculate_distance(pointA,pointB), 3))
+            cpa = round(calculate_distance(pointA,pointB), 3)
             
             if d_map == True:
                 
@@ -103,7 +104,7 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
             #Is the CPA position ahead or astern the ship's beam ?
             signe = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
 
-            cpa = abs(round(calculate_distance(pointA,cp_position)* signe, 3))
+            cpa = round(calculate_distance(pointA,cp_position)* signe, 3)
             
             tcpa = (calculate_distance(pointB,cp_position) / objectB_speed_relative)*60.0
 
@@ -217,7 +218,7 @@ def calculate_distance(pointA, pointB):
     distance = 6378.137*c/1.852
     
     
-    return abs(distance)
+    return distance
 
 def calculate_bearing(pointA, pointB):
     
@@ -260,9 +261,11 @@ def calculate_future_position(pointA,object_speed, vector_angle):
 
     lat1 = radians(pointA[0])
     lon1 = radians(pointA[1])
+    # print("**********")
+    # print(lat1,lon1)
     vector_angle = radians(vector_angle)
 
-    lat2 = asin(sin(lat1)*cos(object_speed/6378.137)+cos(lat1)*sin(object_speed/6378.137)*cos(vector_angle))
+    lat2 =  asin(sin(lat1)*cos(object_speed/6378.137)+cos(lat1)*sin(object_speed/6378.137)*cos(vector_angle))
     lon2 = lon1+ atan2(sin(vector_angle)*sin(object_speed/6378.137)*cos(lat1),cos(object_speed/6378.137)-sin(lat1)*sin(lat2))
 
     return( round(degrees(lat2),7),round(degrees(lon2),7)) 
@@ -343,6 +346,7 @@ def get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vecto
         gmap_url += marker_B_cpa
 
     latAfut,lonAfut = calculate_future_position(pointA,objectA_speed, vectorA_angle)
+    
     latBfut,lonBfut = calculate_future_position(pointB,objectB_speed, vectorB_angle)
 
     if relvect != None and relspeed != None :
@@ -358,7 +362,7 @@ def get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vecto
 
     gmap_url += '&sensor=false'
 
-    return gmap_url,[latAfut,lonAcpa,latAfut,lonBcpa] 
+    return gmap_url,[latAcpa,lonAcpa,latBcpa,lonBcpa] 
 
 if __name__ == "__main__":
 
