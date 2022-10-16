@@ -64,7 +64,7 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
 
     if ((objectA_speed == objectB_speed) and (vectorA_angle == vectorB_angle)) or (objectA_speed <= 0.001 and objectB_speed <= 0.001):
         status = "Already at her minimum CPA"
-        print("Already at her minimum CPA")
+        #print("Already at her minimum CPA")
         cpa = calculate_distance(pointA,pointB)
         
         if d_map == True:
@@ -77,7 +77,7 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
     
     elif pointA == pointB :
         
-        print("Objects in the same position")
+        #print("Objects in the same position")
         return {'cpa': 0,'tcpa': 0 }
    
     else:
@@ -85,7 +85,7 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
         #Check if the object is already at his minimum CPA
         if check_ship_going_away(pointA,vectorA_angle,pointB,vectorB_angle_relativ,objectB_speed_relative) == True :
             status  = "Ship going away,already at her minimum CPA"
-            print("Ship going away, already at her minimum CPA")
+            #print("Ship going away, already at her minimum CPA")
             cpa = round(calculate_distance(pointA,pointB), 3)
             
             if d_map == True:

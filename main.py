@@ -1,4 +1,6 @@
+from distutils.util import change_root
 from email import message
+
 import matplotlib.pyplot as plt
 import numpy as np
 from arpaocalc import Ship, ARPA_calculations
@@ -26,21 +28,74 @@ a= [{'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419956823, 'status': '<NavigationStatus.UnderWaySailing: 8>', 'turn': None, 'speed': 1, 'accuracy': False, 'lon': 73.248547, 'lat': 19.118387, 'course': 236.8, 'heading': 511, 'second': 11, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 254}]
 
 
-# test(a)
+
 win= Tk()
-win.geometry("750x250")
-Button(win, text= "Show Graph", command=lambda:  test(a,id_main=id)).pack(pady=20)
-b1 = ttk.Button(win, text= "Change orientation +30", command=lambda: test(a,id,theta=30))
-b1.place(x=200, y=100)
-b2 = ttk.Button(win, text= "Change orientation +60", command=lambda: test(a,id,theta=60))
-b2.place(x=200, y=150)  
-b3 = ttk.Button(win, text= "Change orientation -30", command=lambda: test(a,id,theta =-30))
-b3.place(x=450, y=100)
-b4 = ttk.Button(win, text= "Change orientation -60", command=lambda: test(a,id,theta =-60))
-b4.place(x=450, y=150)
-win.mainloop()
+#win.geometry("1600x900")
+win.attributes('-fullscreen',True)
+r1 = [0.033,0.0833,0.1667]
+r2 = [0.05,0.1,0.2]
 
+def change_time(Checkbutton1):
+    if Checkbutton1 ==1:
+        clear_frame(win,a,id,r1,t =1)
+        test.__defaults__ =  (1,False,0)
+    else:
+        clear_frame(win,a,id,r1)
+        test.__defaults__ =  (0,False,0)
 
+def display_text(entry,r):
+
+    theta= entry.get()
+    if theta == '':
+        theta = 0
+    else:
+        theta = float(theta)
+    clear_frame(win,a,id,r,theta=theta)
+
+def change_mode(r): 
+
+    clear_frame(win,a,id,r)
+
+def clear_frame(window,a,id_main,rad,t = 0 ,show_list = False,theta=0):
+    
+    for widgets in window.winfo_children():    
+        widgets.destroy()
+
+    test(window,a,id_main,rad,t,theta=theta)
+    main(rad)
+def main(rad=r1):
+    b0  = ttk.Button(win, text= "Show Graph", command=lambda:  clear_frame(win,a,id,rad))
+    b0.place(x=200, y=50)
+    b1 = ttk.Button(win, text= "Change orientation +30", command=lambda: clear_frame(win,a,id,rad,theta=30))
+    b1.place(x=200, y=100)
+    b2 = ttk.Button(win, text= "Change orientation +60", command=lambda: clear_frame(win,a,id,rad,theta=60))
+    b2.place(x=200, y=150)  
+    b3 = ttk.Button(win, text= "Change orientation -30", command=lambda: clear_frame(win,a,id,rad,theta =-30))
+    b3.place(x=200, y=200)
+    b4 = ttk.Button(win, text= "Change orientation -60", command=lambda: clear_frame(win,a,id,rad,theta =-60))
+    b4.place(x=200, y=250)
+    b5 = ttk.Button(win, text= "DAY", command=lambda: change_mode(r1))
+    b5.place(x=1400, y=750)
+    b5 = ttk.Button(win, text= "NIGHT", command=lambda: change_mode(r2))
+    b5.place(x=1500, y=750)
+
+    entry= Entry(win, width= 40)
+    entry.focus_set()
+    entry.place(x=200,y=300)
+
+    #Create a Button to validate Entry Widget
+    b6  = ttk.Button(win, text= "Enter",width= 20, command=lambda: display_text(entry,r1))
+    b6.place(x=200,y=350)
+
+    b7 = ttk.Button(win, text = "Global time",command= lambda: change_time(1))
+    b7.place(x=300,y=800)
+
+    b8 = ttk.Button(win, text = "local time",command= lambda: change_time(0))
+    b8.place(x=200,y=800)
+
+    win.mainloop()
+
+main()
 
 
     

@@ -1,9 +1,16 @@
-from email import message
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plot1
 import numpy as np
+import tkinter as tk
+import pandas as pd
 from arpaocalc import Ship, ARPA_calculations
 from tkinter import *
+from tkinter import ttk
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,NavigationToolbar2Tk)
+from matplotlib.patches import Circle
+from datetime import datetime,timedelta
 
+ls = [30,-30,+60,-60]
 
 def get_arrow(angle):
     a = np.deg2rad(angle)
@@ -13,34 +20,47 @@ def get_arrow(angle):
 
 
 
-def test(a,id_main,show_list = False,theta=0):
-    plt.close()
-
+def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
+    
+    fig = Figure(figsize = (8, 8),
+                dpi = 100)
+    canvas = FigureCanvasTkAgg(fig,
+                                master = window)
+    
+    
+    plot1 = fig.add_subplot(111)
+    #plot1.clear()
     id_list = []
-    tcpa_dict = dict()
+    cpa_dict = dict()
     ship_ls = []
     for msg in a:
         if msg["mmsi"] not in id_list:
             ship_ls.append(Ship(msg["mmsi"],(msg["lon"],msg["lat"]),msg["speed"],msg["course"]))
             id_list.append(msg['mmsi'])
             if msg['mmsi'] == id_main:
+                tex = "HDG:" + "\t"+  str(msg["heading"]) + "\n" + "\n" +  "SOG:" +"\t"+  str(msg["speed"])+ "\n" + "\n"+ "COG:" + "\t"+ str(msg["course"])
+                tex2 = "LONG:" "\t" + str(msg["lon"]) + "\n" + "\n" + "LAT:" + "\t"  + str(msg["lat"])
                 objectA = ship_ls[-1]
+    
     objectA.heading += theta
-    plt.xlim(xmin=objectA.position[0]-0.25,xmax=objectA.position[0]+0.25)
-    plt.ylim(ymin=objectA.position[1]-0.25,ymax=objectA.position[1]+0.25)
-    plt.plot(objectA.position[0],objectA.position[1] ,marker =get_arrow(90-objectA.heading),color = 'blue', markersize=15)
-    plt.grid()
+    tempobject =objectA
+    plot1.set_xlim(xmin=objectA.position[0]-0.25,xmax=objectA.position[0]+0.25)
+    plot1.set_ylim(ymin=objectA.position[1]-0.25,ymax=objectA.position[1]+0.25)
+    plot1.plot(objectA.position[0],objectA.position[1] ,marker =get_arrow(90-objectA.heading),color = 'blue', markersize=15)
+    plot1.grid()
 
 
-    txt = 'ship list \n'
+   
+    colors = [(0,1,0,0.5),(1,0.64,0.25),(1,0,0,0.25)]
 
-    for i in range(4):
+    for i in range(3):
 
-        c1 = plt.Circle((objectA.position[0],objectA.position[1] ),(i+1)*0.08 ,fill = False )
-        c1.set_edgecolor("green")
-        plt.gcf().gca().add_artist(c1)    
+        c1 = Circle((objectA.position[0],objectA.position[1] ),rad[2-i] ,facecolor=colors[i] )
+        c1.set_edgecolor("red")
+        
+        plot1.add_patch(c1)    
     name = 'INS MUMBAI'
-    plt.text(objectA.position[0]+0.01,objectA.position[1],name)
+    plot1.text(objectA.position[0]+0.01,objectA.position[1],name)
 
 
     for i in range(0,len(ship_ls)):
@@ -49,70 +69,101 @@ def test(a,id_main,show_list = False,theta=0):
         if id_list[i] != id_main:
             id = id_list[i]
             objectB = ship_ls[i]
-            #print(objectB.heading)
             results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
-            str1 = 'cpa:' +str(round(results['cpa'],3)) + 'tcpa: '+ str(round(results['tcpa'],3))
-            plt.plot(objectB.position[0],objectB.position[1] ,marker =get_arrow(90 -objectB.heading),color = 'orange', markersize=15)
-            plt.text(objectB.position[0],objectB.position[1],str1)
-            txt += str(id_list[i]) +" " + str1 + "\n"+ results['status']+'\n'
-            tcpa_dict[id] = abs(results['cpa'])
-    print(tcpa_dict)
-    dic2=dict(sorted(tcpa_dict.items(),key= lambda x:x[1]))
-    print("-------")
-    print(dic2)
+            #print(objectB.id)
+            templis = []
+            newlis = []
+            for alpha in ls:
+                
+                tempobject.heading +=alpha
+                
+                templis.append(ARPA_calculations(tempobject, objectB,m=False, posAatcpa = True, posBatcpa= True))
+                tempobject.heading -=alpha
+            #print(templis)
+            #print(abs(templis[0]['cpa']),round(templis[0]['tcpa'],2),abs(templis[1]['cpa']),round(templis[1]['tcpa'],2),abs(templis[2]['cpa']),round(templis[2]['tcpa'],2),abs(templis[3]['cpa']),round(templis[3]['tcpa'],2))
+            plot1.plot(objectB.position[0],objectB.position[1] ,marker =get_arrow(90 -objectB.heading),color = 'magenta', markersize=15)
+            plot1.text(objectB.position[0],objectB.position[1],id)
+            
+            if t == 0:
+
+                cpa_dict[id] = [abs(results['cpa']),round(results['tcpa'],2),abs(templis[0]['cpa']),round(templis[0]['tcpa'],2),abs(templis[1]['cpa']),round(templis[1]['tcpa'],2),abs(templis[2]['cpa']),round(templis[2]['tcpa'],2),abs(templis[3]['cpa']),round(templis[3]['tcpa'],2)]
+            else:
+                tcp = round(results['tcpa'],2)
+                min = int(tcp//1)
+                sec = round((tcp%1)*60)
+                
+                ti = (datetime.now() + timedelta(minutes=min,seconds = sec)).time().replace(microsecond=0)
+                for i in range(4):
+                    tc = round(templis[i]['tcpa'],2)
+                    mi = int(tc//1)
+                    se = round((tc%1)*60)
+                    
+                    newlis.append((datetime.now() + timedelta(minutes=mi,seconds = se)).time().replace(microsecond=0))
+                cpa_dict[id] = [abs(results['cpa']),ti,abs(templis[0]['cpa']),newlis[0],abs(templis[1]['cpa']),newlis[1],abs(templis[2]['cpa']),newlis[2],abs(templis[3]['cpa']),newlis[3]]
+    dic2=dict(sorted(cpa_dict.items(),key= lambda x:x[1]))
+ 
     res = list(dic2.keys())[0]
     for i in range(len(id_list)):
         if id_list[i]==res:
             objectB = ship_ls[i]
             
-            # print(objectA.position)
-            # print("---------")
-            # print(objectB.position)
+
             
             results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
 
             try:
-                print(results['coord'])
-                plt.plot(results['coord'][0],results['coord'][1] ,marker =get_arrow(90 -objectA.heading),color = 'red', markersize=15)
-                plt.text(results['coord'][0]+0.01,results['coord'][1],name)
-                plt.plot(results['coord'][2],results['coord'][3] ,marker =get_arrow(90 -objectB.heading),color = 'black', markersize=15)
-                plt.plot([results['coord'][0],results['coord'][2]],[results['coord'][1],results['coord'][3]],'m--')
-                plt.plot([objectB.position[0],results['coord'][2]],[objectB.position[1],results['coord'][3]],'k--')
-                plt.plot([objectA.position[0],results['coord'][0]],[objectA.position[1],results['coord'][1]],'r--')
+
+                plot1.plot(results['coord'][2],results['coord'][3] ,marker =get_arrow(90 -objectB.heading),color = 'black', markersize=15)
+                #plot1.plot([results['coord'][0],results['coord'][2]],[results['coord'][1],results['coord'][3]],'m--')
+                plot1.plot([objectB.position[0],results['coord'][2]],[objectB.position[1],results['coord'][3]],'k--')
+                #plot1.plot([objectA.position[0],results['coord'][0]],[objectA.position[1],results['coord'][1]],'r--')
             except:
                 pass
-            c = plt.Circle((objectB.position[0], objectB.position[1] ),0.008 ,fill = False )
+            c = Circle((objectB.position[0], objectB.position[1] ),0.008 ,fill = False )
             c.set_edgecolor("red")
-            plt.gcf().gca().add_artist(c)
+            plot1.add_patch(c)
 
 
-    if show_list:
-        ws = Tk()
-        ws.title('SHIPS LIST')
-        ws.geometry('400x300')
-        ws.config(bg='#A67449')
-        message = txt
-        text_box = Text(
-            ws,
-            height=26,
-            width=80
-        )
-        text_box.pack(expand=True)
+    df= pd.Series(dic2).to_frame()
+    df.columns = ["CPA"]
+    
+    df2 = df.CPA.apply(pd.Series)
+    df2.columns = ["CPA","TCPA","CPA(+30)","TCPA(+30)","CPA(-30)","TCPA(-30)","CPA(+60)","TCPA(+60)","CPA(-60)","TCPA(-60)"]
 
-        text_box.insert('end', message)
+    cols = list(df2.columns)
+    tree =  ttk.Treeview(window)
+    tree.place(x=0,y=500)
+    tree["columns"] = cols
+    for i in cols:
+        tree.column(i, anchor="w",width=75)
+        tree.heading(i, text=i, anchor='w')
+    j = 0
+    for index, row in df2.iterrows():
+        
+        tree.insert("",j+1,text=index,values=list(row))
+        j+=1
 
-        ws2 = Tk()
-        ws2.title('rank')
-        ws2.geometry('400x300')
-        ws2.config(bg='#A67449')
-        message = dic2
-        text_box2 = Text(
-            ws2,
-            height=26,
-            width=80
-        )
-        text_box2.pack(expand=True)
+    # creating the Tkinter canvas
+    # containing the Matplotlib figure
+ 
+    canvas.draw()
 
-        text_box2.insert('end', message)
-    print("ends")
-    plt.show()
+    # placing the canvas on the Tkinter window
+    canvas.get_tk_widget().pack(anchor='se')
+    
+    # creating the Matplotlib toolbar
+    toolbar = NavigationToolbar2Tk(canvas,
+                                    window)
+    toolbar.update()
+
+    # placing the toolbar on the Tkinter window
+    canvas.get_tk_widget().pack()
+
+
+    T = tk.Text(window, height=5, width=30)
+    T.pack(anchor='s')
+    T.insert(tk.END, tex)
+
+    T1 = tk.Text(window, height=5, width=30)
+    T1.place(x=450,y=800)
+    T1.insert(tk.END, tex2)
