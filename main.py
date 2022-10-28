@@ -7,10 +7,48 @@ from arpaocalc import Ship, ARPA_calculations
 from tkinter import *
 from tkinter import ttk
 from func import test
+import threading
+
+
+#AIS FUNCTIONS
+import socket
+from pyais import decode
+ 
+UDP_IP = "169.254.70.16" #HP-ab0027tx
+UDP_PORT = 12345
+ 
+sock = socket.socket(socket.AF_INET, # Internet
+                      socket.SOCK_DGRAM) # UDP
+
+sock.bind((UDP_IP, UDP_PORT))
+ais_data_list = []
+
+def get_ais_data():
+
+    
+    while True:
+        try:
+            data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+            #print("received message: %s" % data)
+            #decoded = decode(b"!AIVDM,1,1,,B,15NG6V0P01G?cFhE`R2IU?wn28R>,0*05")
+            decoded = decode(data).asdict()
+            ais_data_list.append(decoded)
+            print(decoded)    
+        
+        except Exception as error:
+            print ("An error occurred", error)
+
+    return decoded
 
 
 id = 419565453
 
+
+trd = threading.Thread(target=get_ais_data, args=()) 
+trd.start()
+a = ais_data_list
+
+"""
 a= [{'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus.Moored: 5>', 'turn': None, 'speed': 2.9, 'accuracy': False, 'lon': 73.05, 'lat': 19.085, 'course': 270, 'heading': 511, 'second': 1, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 49315},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419565453, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': None, 'speed': 3, 'accuracy': False, 'lon': 73.05928, 'lat': 19.029358, 'course': 270.0, 'heading': 511, 'second': 3, 'maneuver': 0, 'spare_1': b'\x00', 'raim': True, 'radio': 262144},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419565458, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': None, 'speed': 3, 'accuracy': False, 'lon': 73.05, 'lat': 18.829358, 'course': 90.0, 'heading': 511, 'second': 3, 'maneuver': 0, 'spare_1': b'\x00', 'raim': True, 'radio': 262144},
@@ -27,7 +65,7 @@ a= [{'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419575000, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': None, 'speed': 1, 'accuracy': False, 'lon': 72.971545, 'lat': 19.015558, 'course':48.9, 'heading': 511, 'second': 6, 'maneuver': 0, 'spare_1': b'@', 'raim': False, 'radio': 49308},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419956823, 'status': '<NavigationStatus.UnderWaySailing: 8>', 'turn': None, 'speed': 1, 'accuracy': False, 'lon': 73.248547, 'lat': 19.118387, 'course': 236.8, 'heading': 511, 'second': 11, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 254}]
 
-
+"""
 
 win= Tk()
 #win.geometry("1600x900")
