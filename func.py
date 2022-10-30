@@ -35,18 +35,21 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
     ship_ls = []
     for msg in a:
         if msg["mmsi"] not in id_list:
+            #if msg["shipname"] !=None:
             ship_ls.append(Ship(msg["mmsi"],(msg["lon"],msg["lat"]),msg["speed"],msg["course"]))
             id_list.append(msg['mmsi'])
             if msg['mmsi'] == id_main:
-                tex = "HDG:" + "\t"+  str(msg["heading"]) + "\n" + "\n" +  "SOG:" +"\t"+  str(msg["speed"])+ "\n" + "\n"+ "COG:" + "\t"+ str(msg["course"])
+                #msg["heading"] = 240
+                tex = "HDG:" + "\t"+  str(msg["heading"]) + "\n" + "\n" +  "SOG:" +"\t"+  str(msg["speed"])+ "\n" + "\n"+ "COG:" + "\t"+ str(msg["course"]) #msg["heading"] #240
                 tex2 = "LONG:" "\t" + str(msg["lon"]) + "\n" + "\n" + "LAT:" + "\t"  + str(msg["lat"])
                 objectA = ship_ls[-1]
     
     objectA.heading += theta
     tempobject =objectA
-    plot1.set_xlim(xmin=objectA.position[0]-0.25,xmax=objectA.position[0]+0.25)
-    plot1.set_ylim(ymin=objectA.position[1]-0.25,ymax=objectA.position[1]+0.25)
-    plot1.plot(objectA.position[0],objectA.position[1] ,marker =get_arrow(90-objectA.heading),color = 'blue', markersize=15)
+    zoom_resolution = 0.0125 #0.25-OG #0.1
+    plot1.set_xlim(xmin=objectA.position[0]-zoom_resolution,xmax=objectA.position[0]+zoom_resolution) 
+    plot1.set_ylim(ymin=objectA.position[1]-zoom_resolution,ymax=objectA.position[1]+zoom_resolution)
+    plot1.plot(objectA.position[0],objectA.position[1] ,marker =get_arrow(90-objectA.heading),color = 'blue', markersize=30)
     plot1.grid()
 
 
@@ -60,7 +63,7 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
         
         plot1.add_patch(c1)    
     name = 'INS MUMBAI'
-    plot1.text(objectA.position[0]+0.01,objectA.position[1],name)
+    plot1.text(objectA.position[0]+1,objectA.position[1],name) #0.01
 
 
     for i in range(0,len(ship_ls)):
@@ -82,7 +85,7 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
             #print(templis)
             #print(abs(templis[0]['cpa']),round(templis[0]['tcpa'],2),abs(templis[1]['cpa']),round(templis[1]['tcpa'],2),abs(templis[2]['cpa']),round(templis[2]['tcpa'],2),abs(templis[3]['cpa']),round(templis[3]['tcpa'],2))
             plot1.plot(objectB.position[0],objectB.position[1] ,marker =get_arrow(90 -objectB.heading),color = 'magenta', markersize=15)
-            plot1.text(objectB.position[0],objectB.position[1],id)
+            plot1.text(objectB.position[0],objectB.position[1],id) #name
             
             if t == 0:
 
@@ -100,7 +103,7 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
                     
                     newlis.append((datetime.now() + timedelta(minutes=mi,seconds = se)).time().replace(microsecond=0))
                 cpa_dict[id] = [abs(results['cpa']),ti,abs(templis[0]['cpa']),newlis[0],abs(templis[1]['cpa']),newlis[1],abs(templis[2]['cpa']),newlis[2],abs(templis[3]['cpa']),newlis[3]]
-    dic2=dict(sorted(cpa_dict.items(),key= lambda x:x[1]))
+    dic2=dict(sorted(cpa_dict.items(),key= lambda x:x[1][1])) #lambda x:x[1]
  
     res = list(dic2.keys())[0]
     for i in range(len(id_list)):
@@ -114,9 +117,9 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
             try:
 
                 plot1.plot(results['coord'][2],results['coord'][3] ,marker =get_arrow(90 -objectB.heading),color = 'black', markersize=15)
-                #plot1.plot([results['coord'][0],results['coord'][2]],[results['coord'][1],results['coord'][3]],'m--')
+                plot1.plot([results['coord'][0],results['coord'][2]],[results['coord'][1],results['coord'][3]],'m--')
                 plot1.plot([objectB.position[0],results['coord'][2]],[objectB.position[1],results['coord'][3]],'k--')
-                #plot1.plot([objectA.position[0],results['coord'][0]],[objectA.position[1],results['coord'][1]],'r--')
+                plot1.plot([objectA.position[0],results['coord'][0]],[objectA.position[1],results['coord'][1]],'r--')
             except:
                 pass
             c = Circle((objectB.position[0], objectB.position[1] ),0.008 ,fill = False )

@@ -8,44 +8,104 @@ from tkinter import *
 from tkinter import ttk
 from func import test
 import threading
-
+import sys
+import time
 
 #AIS FUNCTIONS
 import socket
 from pyais import decode
  
-UDP_IP = "169.254.70.16" #HP-ab0027tx
-UDP_PORT = 12345
- 
-sock = socket.socket(socket.AF_INET, # Internet
-                      socket.SOCK_DGRAM) # UDP
-
-sock.bind((UDP_IP, UDP_PORT))
 ais_data_list = []
 
 def get_ais_data():
+    UDP_IP = "169.254.70.16" #HP-ab0027tx
+    UDP_PORT = 12345
+     
+    sock = socket.socket(socket.AF_INET, # Internet
+                          socket.SOCK_DGRAM) # UDP
 
+    sock.bind((UDP_IP, UDP_PORT))
     
+
+    i = 0
     while True:
         try:
             data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
             #print("received message: %s" % data)
             #decoded = decode(b"!AIVDM,1,1,,B,15NG6V0P01G?cFhE`R2IU?wn28R>,0*05")
             decoded = decode(data).asdict()
-            ais_data_list.append(decoded)
-            print(decoded)    
+
+            if decoded['mmsi'] == 419565453:
+                i=0
+                if i==0:
+                    decoded['heading'] = 60
+                    decoded['course'] = 60
+                    decoded['speed'] = 10
+                    print("============Main Ship Detected============")
+                    ais_data_list.append(decoded)
+                    print(decoded)
+                    i = i+1
+            #elif decoded['heading'] == 511:
+                #continue
+
+            else:
+                ais_data_list.append(decoded)
+                print(decoded)
+                
         
         except Exception as error:
             print ("An error occurred", error)
-
+        except KeyboardInterrupt:
+            print('Interrupted')
+            #break
+            sys.exit(0)
     return decoded
 
 
 id = 419565453
 
+#trd = threading.Thread(target=get_ais_data, args=()) 
+#trd.start()
 
-trd = threading.Thread(target=get_ais_data, args=()) 
-trd.start()
+
+from DockyardData import dockyard_data
+
+def get_sim_ais_data(dockyard_data):
+    for decoded in dockyard_data:
+        try:
+            #print("1",decoded)
+            i=0
+            if decoded['mmsi'] == 419565453: 
+                if i==0:
+                    decoded['heading'] = 60
+                    decoded['course'] = 60
+                    decoded['speed'] = 10
+                    print("============Main Ship Detected============")
+                    ais_data_list.append(decoded)
+                    #print(decoded)
+                    i = i+1
+            elif decoded['mmsi'] == (None or 0):
+                continue
+
+            #elif decoded['heading'] == 511:
+                #continue
+
+            else:
+                ais_data_list.append(decoded)
+                #print(decoded)
+            #print(decoded["shipname"] in decoded)
+            time.sleep(0.2)
+        except Exception as error_in_data:
+            print("error_in_data",error_in_data)
+        except KeyboardInterrupt:
+            print("Data Reading stopped")
+            sim.join()
+
+
+
+sim = threading.Thread(target=get_sim_ais_data, args=(dockyard_data,)) 
+sim.start()
+
 a = ais_data_list
 
 """
@@ -65,12 +125,12 @@ a= [{'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419575000, 'status': '<NavigationStatus.UnderWayUsingEngine: 0>', 'turn': None, 'speed': 1, 'accuracy': False, 'lon': 72.971545, 'lat': 19.015558, 'course':48.9, 'heading': 511, 'second': 6, 'maneuver': 0, 'spare_1': b'@', 'raim': False, 'radio': 49308},
 {'msg_type': 1, 'repeat': 0, 'mmsi': 419956823, 'status': '<NavigationStatus.UnderWaySailing: 8>', 'turn': None, 'speed': 1, 'accuracy': False, 'lon': 73.248547, 'lat': 19.118387, 'course': 236.8, 'heading': 511, 'second': 11, 'maneuver': 0, 'spare_1': b'\x00', 'raim': False, 'radio': 254}]
 
-"""
-
+#"""
+#a = dockyard_data
 win= Tk()
-#win.geometry("1600x900")
+win.geometry("1920x1080")
 win.attributes('-fullscreen',True)
-r1 = [0.033,0.0833,0.1667]
+r1 = [0.033,0.0833,0.1667] #[0.013,0.0233,0.0367] #
 r2 = [0.05,0.1,0.2]
 
 def change_time(Checkbutton1):
@@ -101,6 +161,7 @@ def clear_frame(window,a,id_main,rad,t = 0 ,show_list = False,theta=0):
 
     test(window,a,id_main,rad,t,theta=theta)
     main(rad)
+    #win.after(1000, clear_frame)
 def main(rad=r1):
     b0  = ttk.Button(win, text= "Show Graph", command=lambda:  clear_frame(win,a,id,rad))
     b0.place(x=200, y=50)
@@ -133,7 +194,13 @@ def main(rad=r1):
 
     win.mainloop()
 
-main()
 
-
-    
+try:
+    #clear_frame(win,a,id,rad)
+    main()
+except Exception as error:
+    print(error)
+except KeyboardInterrupt:
+    print("key stopped")
+    sim.join()
+    #break
