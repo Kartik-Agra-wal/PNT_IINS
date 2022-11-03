@@ -70,8 +70,11 @@ id = 419565453
 
 from DockyardData import dockyard_data
 
+
 def get_sim_ais_data(dockyard_data):
+    now = time.time()
     for decoded in dockyard_data:
+        print(decoded)
         try:
             #print("1",decoded)
             i=0
@@ -80,21 +83,26 @@ def get_sim_ais_data(dockyard_data):
                     decoded['heading'] = 60
                     decoded['course'] = 60
                     decoded['speed'] = 10
-                    print("============Main Ship Detected============")
+                    #print("============Main Ship Detected============")
                     ais_data_list.append(decoded)
                     #print(decoded)
-                    i = i+1
+                    #i = i+1
             elif decoded['mmsi'] == (None or 0):
                 continue
 
-            #elif decoded['heading'] == 511:
-                #continue
+            elif decoded['heading'] == 511:
+                continue
 
             else:
                 ais_data_list.append(decoded)
                 #print(decoded)
             #print(decoded["shipname"] in decoded)
             time.sleep(0.2)
+            later = time.time()
+            difference = int(later - now)
+            if difference >= 15:
+                #clear_frame(win,a,id,rad=r1)
+                now = time.time()
         except Exception as error_in_data:
             print("error_in_data",error_in_data)
         except KeyboardInterrupt:
@@ -129,7 +137,7 @@ a= [{'msg_type': 1, 'repeat': 0, 'mmsi': 419001261, 'status': '<NavigationStatus
 #a = dockyard_data
 win= Tk()
 win.geometry("1920x1080")
-win.attributes('-fullscreen',True)
+win.attributes('-fullscreen',False)
 r1 = [0.033,0.0833,0.1667] #[0.013,0.0233,0.0367] #
 r2 = [0.05,0.1,0.2]
 
@@ -193,6 +201,16 @@ def main(rad=r1):
     b8.place(x=200,y=800)
 
     win.mainloop()
+
+
+def clear_frame_after_20_seconds():
+    import time 
+    print("In Thread 20 Seconds")
+    time.sleep(20)
+    clear_frame(win,a,id,rad=r1)
+
+#abc = threading.Thread(target=clear_frame_after_20_seconds, args=()) 
+#abc.start()
 
 
 try:

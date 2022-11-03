@@ -63,7 +63,7 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
         
         plot1.add_patch(c1)    
     name = 'INS MUMBAI'
-    plot1.text(objectA.position[0]+1,objectA.position[1],name) #0.01
+    plot1.text(objectA.position[0]+0.001,objectA.position[1],name) #0.01
 
 
     for i in range(0,len(ship_ls)):
@@ -84,7 +84,7 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
                 tempobject.heading -=alpha
             #print(templis)
             #print(abs(templis[0]['cpa']),round(templis[0]['tcpa'],2),abs(templis[1]['cpa']),round(templis[1]['tcpa'],2),abs(templis[2]['cpa']),round(templis[2]['tcpa'],2),abs(templis[3]['cpa']),round(templis[3]['tcpa'],2))
-            plot1.plot(objectB.position[0],objectB.position[1] ,marker =get_arrow(90 -objectB.heading),color = 'magenta', markersize=15)
+            plot1.plot(objectB.position[0],objectB.position[1] ,marker =get_arrow(90 -objectB.heading),color = 'green', markersize=15)
             plot1.text(objectB.position[0],objectB.position[1],id) #name
             
             if t == 0:
@@ -103,9 +103,10 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
                     
                     newlis.append((datetime.now() + timedelta(minutes=mi,seconds = se)).time().replace(microsecond=0))
                 cpa_dict[id] = [abs(results['cpa']),ti,abs(templis[0]['cpa']),newlis[0],abs(templis[1]['cpa']),newlis[1],abs(templis[2]['cpa']),newlis[2],abs(templis[3]['cpa']),newlis[3]]
-    dic2=dict(sorted(cpa_dict.items(),key= lambda x:x[1][1])) #lambda x:x[1]
- 
+    dic2=dict(sorted(cpa_dict.items(),key= lambda x:x[1])) #lambda x:x[1] #lambda x:x[1][1]) - For TCPA
+    
     res = list(dic2.keys())[0]
+    #print("res",res)
     for i in range(len(id_list)):
         if id_list[i]==res:
             objectB = ship_ls[i]
@@ -138,7 +139,7 @@ def test(window,a,id_main ,rad,t = 0,show_list = False,theta=0):
     tree.place(x=0,y=500)
     tree["columns"] = cols
     for i in cols:
-        tree.column(i, anchor="w",width=75)
+        tree.column(i, anchor="w",width=75)#75
         tree.heading(i, text=i, anchor='w')
     j = 0
     for index, row in df2.iterrows():
