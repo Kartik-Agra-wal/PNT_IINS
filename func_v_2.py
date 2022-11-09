@@ -14,8 +14,7 @@ import plotly.graph_objects as go
 
 ls = [30,-30,+60,-60]
 
-x_ls = []
-y_ls = []
+
 
 def figures_to_html(figs, filename="dashboard.html"):
     with open(filename, 'w') as dashboard:
@@ -76,8 +75,9 @@ def test(a,id_main ,theta=0,t=0):
         if id_list[i] != id_main:
             id = id_list[i]
             objectB = ship_ls[i]
-            x_ls.append(objectB.position[0])
-            y_ls.append(objectB.position[1])
+
+            fig.add_trace(go.Scatter(mode="markers+text",x= [objectB.position[0]],y= [objectB.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectB.heading,color = 'orange', size=15),text=id,textposition="top center")),
+
             results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
             #print(objectB.id)
             templis = []
@@ -124,7 +124,6 @@ def test(a,id_main ,theta=0,t=0):
 
 
 
-    fig.add_trace(go.Scatter(mode="markers+text",x= x_ls,y= y_ls ,marker =dict(symbol = 53,angle = 90 - objectB.heading,color = 'orange', size=15),text=id,textposition="top center")),
 
     fig.update_layout(showlegend=False)
 
