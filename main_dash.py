@@ -1,0 +1,296 @@
+from distutils.util import change_root
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+from arpaocalc import Ship, ARPA_calculations
+from tkinter import *
+from tkinter import ttk
+import pandas as pd
+import threading
+import sys
+import time
+from datetime import datetime,timedelta
+t=0
+
+
+
+#AIS FUNCTIONS
+import socket
+from pyais import decode
+ 
+ais_data_list = []
+
+def get_ais_data():
+    UDP_IP = "169.254.70.16" #HP-ab0027tx
+    UDP_PORT = 12345
+     
+    sock = socket.socket(socket.AF_INET, # Internet
+                          socket.SOCK_DGRAM) # UDP
+
+    sock.bind((UDP_IP, UDP_PORT))
+    
+
+    i = 0
+    while True:
+        try:
+            data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+            #print("received message: %s" % data)
+            #decoded = decode(b"!AIVDM,1,1,,B,15NG6V0P01G?cFhE`R2IU?wn28R>,0*05")
+            decoded = decode(data).asdict()
+
+            if decoded['mmsi'] == 419565453:
+                i=0
+                if i==0:
+                    decoded['heading'] = 60
+                    decoded['course'] = 60
+                    decoded['speed'] = 10
+                    print("============Main Ship Detected============")
+                    ais_data_list.append(decoded)
+                    print(decoded)
+                    i = i+1
+            #elif decoded['heading'] == 511:
+                #continue
+
+            else:
+                ais_data_list.append(decoded)
+                print(decoded)
+                
+        
+        except Exception as error:
+            print ("An error occurred", error)
+        except KeyboardInterrupt:
+            print('Interrupted')
+            #break
+            sys.exit(0)
+    return decoded
+
+
+id_main = 419565453
+
+#trd = threading.Thread(target=get_ais_data, args=()) 
+#trd.start()
+
+
+from DockyardData import dockyard_data
+
+
+def get_sim_ais_data(dockyard_data):
+    now = time.time()
+    for decoded in dockyard_data:
+        
+        try:
+            #print("1",decoded)
+            i=0
+            if decoded['mmsi'] == 419565453: 
+                if i==0:
+                    decoded['heading'] = 60
+                    decoded['course'] = 60
+                    decoded['speed'] = 10
+                    #print("============Main Ship Detected============")
+                    ais_data_list.append(decoded)
+                    #print(decoded)
+                    #i = i+1
+            elif decoded['mmsi'] == (None or 0):
+                continue
+
+            elif decoded['heading'] == 511:
+                continue
+
+            else:
+                ais_data_list.append(decoded)
+                #print(decoded)
+            #print(decoded["shipname"] in decoded)
+            time.sleep(0.2)
+            later = time.time()
+            difference = int(later - now)
+            if difference >= 15:
+                #clear_frame(win,a,id,rad=r1)
+                now = time.time()
+        except Exception as error_in_data:
+            print("error_in_data",error_in_data)
+        except KeyboardInterrupt:
+            print("Data Reading stopped")
+            sim.join()
+
+
+
+sim = threading.Thread(target=get_sim_ais_data, args=(dockyard_data,)) 
+sim.start()
+
+
+import plotly.graph_objects as go
+
+
+import dash
+import dash_daq as daq
+from dash.dependencies import Output, Input
+import dash_bootstrap_components as dbc
+from dash import dcc,html
+from dash import ctx
+from random import random
+import plotly
+
+ls = [30,-30,+60,-60]
+
+    
+def test(ais_data_list,theta=0):
+    id_list = []
+    cpa_dict = dict()
+    ship_ls = []
+    for msg in ais_data_list:
+        if msg["mmsi"] not in id_list:
+            ship_ls.append(Ship(msg["mmsi"],(msg["lon"],msg["lat"]),msg["speed"],msg["course"]))
+            id_list.append(msg['mmsi'])
+            if msg['mmsi'] == id_main:
+                tex = "HDG:" + "\t"+  str(msg["heading"]) + "\n" + "\n" +  "SOG:" +"\t"+  str(msg["speed"])+ "\n" + "\n"+ "COG:" + "\t"+ str(msg["course"])
+                tex2 = "LONG:" "\t" + str(msg["lon"]) + "\n" + "\n" + "LAT:" + "\t"  + str(msg["lat"])
+                objectA = ship_ls[-1]
+    
+
+
+    objectA.heading += theta
+    tempobject =objectA
+    name = 'INS MUMBAI'
+    zoom_resolution = 0.0125
+    fig = go.Figure(layout_xaxis_range=[objectA.position[0]-zoom_resolution,objectA.position[0]+zoom_resolution],layout_yaxis_range=[objectA.position[1]-zoom_resolution,objectA.position[1]+zoom_resolution])
+
+    fig['layout'].update(width=1000, height=1000, autosize=False)
+
+    
+    
+
+    colors = ['red','yellow','green']
+
+    r1 = [0.033/20,0.0833/20,0.1667/20]
+    r2 = [0.05,0.1,0.2]
+    
+   
+
+    fig.add_shape(type="circle",x0 =objectA.position[0]-r1[2],y0 =objectA.position[1]-r1[2],x1 = objectA.position[0]+r1[2],y1 = objectA.position[1]+r1[2] ,fillcolor=colors[2],opacity=0.2)
+    fig.add_shape(type="circle",x0 =objectA.position[0]-r1[1],y0 =objectA.position[1]-r1[1],x1 = objectA.position[0]+r1[1],y1 = objectA.position[1]+r1[1] ,fillcolor=colors[1],opacity=0.2)
+    fig.add_shape(type="circle",x0 =objectA.position[0]-r1[0],y0 =objectA.position[1]-r1[0],x1 = objectA.position[0]+r1[0],y1 = objectA.position[1]+r1[0] ,fillcolor=colors[0],opacity=0.2)
+    
+    
+    # fig.add_shape(type="circle",x0 =objectA.position[0]-r2[2],y0 =objectA.position[1]-r2[2],x1 = objectA.position[0]+r2[2],y1 = objectA.position[1]+r2[2] ,fillcolor=colors[2],opacity=0.2)
+    # fig.add_shape(type="circle",x0 =objectA.position[0]-r2[1],y0 =objectA.position[1]-r2[1],x1 = objectA.position[0]+r2[1],y1 = objectA.position[1]+r2[1] ,fillcolor=colors[1],opacity=0.2)
+    # fig.add_shape(type="circle",x0 =objectA.position[0]-r2[0],y0 =objectA.position[1]-r2[0],x1 = objectA.position[0]+r2[0],y1 = objectA.position[1]+r2[0] ,fillcolor=colors[0],opacity=0.2)
+        
+    
+    fig.add_trace(go.Scatter(mode="markers+text",x= [objectA.position[0]],y= [objectA.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectA.heading,color = 'blue', size=15),text=name,textposition="top center"))
+    
+    for i in range(0,len(ship_ls)):
+        if id_list[i] != id_main:
+            id = id_list[i]
+            objectB = ship_ls[i]
+
+            fig.add_trace(go.Scatter(mode="markers+text",x= [objectB.position[0]],y= [objectB.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectB.heading,color = 'orange', size=15),text=id,textposition="top center")),
+
+            results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
+            #print(objectB.id)
+            templis = []
+            newlis = []
+            for alpha in ls:
+                
+                tempobject.heading +=alpha
+                
+                templis.append(ARPA_calculations(tempobject, objectB,m=False, posAatcpa = True, posBatcpa= True))
+                tempobject.heading -=alpha
+            if t == 0:
+
+                cpa_dict[id] = [abs(results['cpa']),round(results['tcpa'],2),abs(templis[0]['cpa']),round(templis[0]['tcpa'],2),abs(templis[1]['cpa']),round(templis[1]['tcpa'],2),abs(templis[2]['cpa']),round(templis[2]['tcpa'],2),abs(templis[3]['cpa']),round(templis[3]['tcpa'],2)]
+            else:
+                tcp = round(results['tcpa'],2)
+                min = int(tcp//1)
+                sec = round((tcp%1)*60)
+                
+                ti = (datetime.now() + timedelta(minutes=min,seconds = sec)).time().replace(microsecond=0)
+                for i in range(4):
+                    tc = round(templis[i]['tcpa'],2)
+                    mi = int(tc//1)
+                    se = round((tc%1)*60)
+                    
+                    newlis.append((datetime.now() + timedelta(minutes=mi,seconds = se)).time().replace(microsecond=0))
+                cpa_dict[id] = [abs(results['cpa']),ti,abs(templis[0]['cpa']),newlis[0],abs(templis[1]['cpa']),newlis[1],abs(templis[2]['cpa']),newlis[2],abs(templis[3]['cpa']),newlis[3]]
+
+
+    dic2=dict(sorted(cpa_dict.items(),key= lambda x:x[1][1]))
+
+    df= pd.Series(dic2).to_frame()
+    df.columns = ["CPA"]
+    
+    df2 = df.CPA.apply(pd.Series)
+    df2.columns = ["CPA","TCPA","pos30","TCPA1","neg30","TCPA2","pos60","TCPA3","neg60","TCPA4"]
+
+
+
+    fig.update_layout(showlegend=False)
+    fig2 = go.Figure(data=[go.Table(
+        header=dict(values=["Ship"]+list(df2.columns),
+                    fill_color='paleturquoise',
+                    align='left'),
+        cells=dict(values=[df2.index,df2.CPA, df2.TCPA,df2.pos30, df2.TCPA1,df2.neg30, df2.TCPA2,df2.pos60, df2.TCPA3,df2.neg60, df2.TCPA4],
+                fill_color='lavender',
+                align='left'))
+    ])
+
+
+    return fig,fig2    
+
+
+
+
+
+
+app = dash.Dash(__name__)
+app.layout = html.Div([
+    html.H1("PNT"),
+        dcc.Interval(
+            id='interval-component',
+            interval=1*1000,
+            n_intervals=0),
+    html.Div([
+        daq.BooleanSwitch(id="btn1", on=False, color="red",label="+30",labelPosition="bottom"),
+        daq.BooleanSwitch(id="btn2", on=False, color="red",label = "-30",labelPosition="bottom"),
+        daq.BooleanSwitch(id="btn3", on=False, color="red",label = "+60",labelPosition="bottom"),
+        daq.BooleanSwitch(id="btn4", on=False, color="red",label = "-60",labelPosition="bottom")]),
+    html.Div(id='container-button-timestamp'),
+        dcc.Graph(id='live-update-graph-scatter'),
+        dcc.Graph(id='live-table')
+    ])
+
+
+
+@app.callback(Output('live-update-graph-scatter', 'figure'),
+                Output('live-table', 'figure'),
+                Output('btn1', 'on'),
+                Output('btn2', 'on'),
+                Output('btn3', 'on'),
+                Output('btn4', 'on'),
+              [Input('interval-component', 'n_intervals')],
+                Input('btn1', 'on'),
+                Input('btn2', 'on'),
+                Input('btn3', 'on'),
+                Input('btn4', 'on'))
+def app_calback(value,btn1,btn2,btn3,btn4):
+    if btn1:
+        btn2,btn3,btn4 = 0,0,0
+        fig,fig2  =test(ais_data_list,theta = +30)
+
+    elif btn2:
+        btn1,btn3,btn4 = 0,0,0
+        fig,fig2  =test(ais_data_list,theta = -30)
+    elif btn3:
+        btn1,btn2,btn4 = 0,0,0
+        fig,fig2  =test(ais_data_list,theta = +60)
+    elif btn4:
+        btn1,btn2,btn3 = 0,0,0
+        fig,fig2  =test(ais_data_list,theta = -60)
+    else:
+        fig,fig2 = test(ais_data_list,theta= 0)
+
+    return fig,fig2,btn1,btn2,btn3,btn4
+
+
+
+app.run_server(debug=True)
