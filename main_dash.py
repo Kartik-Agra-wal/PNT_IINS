@@ -134,7 +134,8 @@ import plotly
 ls = [30,-30,+60,-60]
 
     
-def test(ais_data_list,theta=0):
+def test(ais_data_list,theta=0,mode = "day"):
+    roc = []
     id_list = []
     cpa_dict = dict()
     ship_ls = []
@@ -163,18 +164,18 @@ def test(ais_data_list,theta=0):
     colors = ['red','yellow','green']
 
     r1 = [0.033/20,0.0833/20,0.1667/20]
-    r2 = [0.05,0.1,0.2]
+    r2 = [0.05/20,0.1/20,0.2/20]
     
    
-
-    fig.add_shape(type="circle",x0 =objectA.position[0]-r1[2],y0 =objectA.position[1]-r1[2],x1 = objectA.position[0]+r1[2],y1 = objectA.position[1]+r1[2] ,fillcolor=colors[2],opacity=0.2)
-    fig.add_shape(type="circle",x0 =objectA.position[0]-r1[1],y0 =objectA.position[1]-r1[1],x1 = objectA.position[0]+r1[1],y1 = objectA.position[1]+r1[1] ,fillcolor=colors[1],opacity=0.2)
-    fig.add_shape(type="circle",x0 =objectA.position[0]-r1[0],y0 =objectA.position[1]-r1[0],x1 = objectA.position[0]+r1[0],y1 = objectA.position[1]+r1[0] ,fillcolor=colors[0],opacity=0.2)
+    if mode == "day":
+        fig.add_shape(type="circle",x0 =objectA.position[0]-r1[2],y0 =objectA.position[1]-r1[2],x1 = objectA.position[0]+r1[2],y1 = objectA.position[1]+r1[2] ,fillcolor=colors[2],opacity=0.2)
+        fig.add_shape(type="circle",x0 =objectA.position[0]-r1[1],y0 =objectA.position[1]-r1[1],x1 = objectA.position[0]+r1[1],y1 = objectA.position[1]+r1[1] ,fillcolor=colors[1],opacity=0.2)
+        fig.add_shape(type="circle",x0 =objectA.position[0]-r1[0],y0 =objectA.position[1]-r1[0],x1 = objectA.position[0]+r1[0],y1 = objectA.position[1]+r1[0] ,fillcolor=colors[0],opacity=0.2)
     
-    
-    # fig.add_shape(type="circle",x0 =objectA.position[0]-r2[2],y0 =objectA.position[1]-r2[2],x1 = objectA.position[0]+r2[2],y1 = objectA.position[1]+r2[2] ,fillcolor=colors[2],opacity=0.2)
-    # fig.add_shape(type="circle",x0 =objectA.position[0]-r2[1],y0 =objectA.position[1]-r2[1],x1 = objectA.position[0]+r2[1],y1 = objectA.position[1]+r2[1] ,fillcolor=colors[1],opacity=0.2)
-    # fig.add_shape(type="circle",x0 =objectA.position[0]-r2[0],y0 =objectA.position[1]-r2[0],x1 = objectA.position[0]+r2[0],y1 = objectA.position[1]+r2[0] ,fillcolor=colors[0],opacity=0.2)
+    else:
+        fig.add_shape(type="circle",x0 =objectA.position[0]-r2[2],y0 =objectA.position[1]-r2[2],x1 = objectA.position[0]+r2[2],y1 = objectA.position[1]+r2[2] ,fillcolor=colors[2],opacity=0.2)
+        fig.add_shape(type="circle",x0 =objectA.position[0]-r2[1],y0 =objectA.position[1]-r2[1],x1 = objectA.position[0]+r2[1],y1 = objectA.position[1]+r2[1] ,fillcolor=colors[1],opacity=0.2)
+        fig.add_shape(type="circle",x0 =objectA.position[0]-r2[0],y0 =objectA.position[1]-r2[0],x1 = objectA.position[0]+r2[0],y1 = objectA.position[1]+r2[0] ,fillcolor=colors[0],opacity=0.2)
         
     
     fig.add_trace(go.Scatter(mode="markers+text",x= [objectA.position[0]],y= [objectA.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectA.heading,color = 'blue', size=15),text=name,textposition="top center"))
@@ -187,6 +188,8 @@ def test(ais_data_list,theta=0):
             fig.add_trace(go.Scatter(mode="markers+text",x= [objectB.position[0]],y= [objectB.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectB.heading,color = 'orange', size=15),text=id,textposition="top center")),
 
             results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
+
+            roc.append([id,round(results['roc'],2)])
             #print(objectB.id)
             templis = []
             newlis = []
@@ -212,7 +215,10 @@ def test(ais_data_list,theta=0):
                     
                     newlis.append((datetime.now() + timedelta(minutes=mi,seconds = se)).time().replace(microsecond=0))
                 cpa_dict[id] = [abs(results['cpa']),ti,abs(templis[0]['cpa']),newlis[0],abs(templis[1]['cpa']),newlis[1],abs(templis[2]['cpa']),newlis[2],abs(templis[3]['cpa']),newlis[3]]
+    rocdf = pd.DataFrame(roc,columns = ["Ship","ROC"])
 
+    rocdf=rocdf.sort_values(by='ROC', ascending=False)
+    
 
     dic2=dict(sorted(cpa_dict.items(),key= lambda x:x[1][1]))
 
@@ -225,6 +231,7 @@ def test(ais_data_list,theta=0):
 
 
     fig.update_layout(showlegend=False)
+    fig.update_layout(title=dict(text="<b>MAP</b>"))
     fig2 = go.Figure(data=[go.Table(
         header=dict(values=["Ship"]+list(df2.columns),
                     fill_color='paleturquoise',
@@ -233,9 +240,19 @@ def test(ais_data_list,theta=0):
                 fill_color='lavender',
                 align='left'))
     ])
+    fig2.update_layout(title=dict(text="<b>SHIP LIST</b>"))
+    fig3 = go.Figure(data=[go.Table(
+        header=dict(values=list(rocdf.columns),
+                    fill_color='paleturquoise',
+                    align='left'),
+        cells=dict(values=[rocdf.Ship,rocdf.ROC],
+                fill_color='lavender',
+                align='left'))
+    ])
+    
+    fig3.update_layout(title=dict(text="<b>Priority List</b>"))
 
-
-    return fig,fig2    
+    return fig,fig2,fig3    
 
 
 
@@ -250,19 +267,22 @@ app.layout = html.Div([
             interval=1*1000,
             n_intervals=0),
     html.Div([
-        daq.BooleanSwitch(id="btn1", on=False, color="red",label="+30",labelPosition="bottom"),
-        daq.BooleanSwitch(id="btn2", on=False, color="red",label = "-30",labelPosition="bottom"),
-        daq.BooleanSwitch(id="btn3", on=False, color="red",label = "+60",labelPosition="bottom"),
-        daq.BooleanSwitch(id="btn4", on=False, color="red",label = "-60",labelPosition="bottom")]),
+        daq.BooleanSwitch(id="btn1", on=False, color="red",label="+30",labelPosition="bottom",style={'display': 'inline-block'}),
+        daq.BooleanSwitch(id="btn2", on=False, color="red",label = "-30",labelPosition="bottom",style={'display': 'inline-block'}),
+        daq.BooleanSwitch(id="btn3", on=False, color="red",label = "+60",labelPosition="bottom",style={'display': 'inline-block'}),
+        daq.BooleanSwitch(id="btn4", on=False, color="red",label = "-60",labelPosition="bottom",style={'display': 'inline-block'}),
+        daq.BooleanSwitch(id="Night", on=False, color="red",label = "Night Mode",labelPosition="bottom")]),
     html.Div(id='container-button-timestamp'),
-        dcc.Graph(id='live-update-graph-scatter'),
-        dcc.Graph(id='live-table')
+        dcc.Graph(id='live-update-graph-scatter',style={'display': 'inline-block'}),
+        dcc.Graph(id='ROC-table',className="column",style={'display': 'inline-block','width':"33%"}),
+        dcc.Graph(id='live-table',className="four columns")
     ])
 
 
 
 @app.callback(Output('live-update-graph-scatter', 'figure'),
                 Output('live-table', 'figure'),
+                Output('ROC-table', 'figure'),
                 Output('btn1', 'on'),
                 Output('btn2', 'on'),
                 Output('btn3', 'on'),
@@ -271,25 +291,30 @@ app.layout = html.Div([
                 Input('btn1', 'on'),
                 Input('btn2', 'on'),
                 Input('btn3', 'on'),
-                Input('btn4', 'on'))
-def app_calback(value,btn1,btn2,btn3,btn4):
+                Input('btn4', 'on'),
+                Input('Night', 'on'))
+def app_calback(value,btn1,btn2,btn3,btn4,Night):
+    if Night:
+        mode = "night"
+    else:
+        mode = "day"
     if btn1:
         btn2,btn3,btn4 = 0,0,0
-        fig,fig2  =test(ais_data_list,theta = +30)
+        fig,fig2,fig3  =test(ais_data_list,theta = +30,mode=mode)
 
     elif btn2:
         btn1,btn3,btn4 = 0,0,0
-        fig,fig2  =test(ais_data_list,theta = -30)
+        fig,fig2,fig3  =test(ais_data_list,theta = -30,mode=mode)
     elif btn3:
         btn1,btn2,btn4 = 0,0,0
-        fig,fig2  =test(ais_data_list,theta = +60)
+        fig,fig2,fig3  =test(ais_data_list,theta = +60,mode=mode)
     elif btn4:
         btn1,btn2,btn3 = 0,0,0
-        fig,fig2  =test(ais_data_list,theta = -60)
+        fig,fig2,fig3  =test(ais_data_list,theta = -60,mode=mode)
     else:
-        fig,fig2 = test(ais_data_list,theta= 0)
+        fig,fig2,fig3 = test(ais_data_list,theta= 0,mode=mode)
 
-    return fig,fig2,btn1,btn2,btn3,btn4
+    return fig,fig2,fig3,btn1,btn2,btn3,btn4
 
 
 

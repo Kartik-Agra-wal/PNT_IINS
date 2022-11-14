@@ -59,6 +59,7 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
     posAatcpa = kwargs.get('posAatcpa', None)
     posBatcpa = kwargs.get('posBatcpa', None)
 
+    
     #Calculation of relative object datas from object B to object A
     (vectorB_angle_relativ,objectB_speed_relative) = calculate_relative_vector(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle)
 
@@ -66,19 +67,28 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
         status = "Already at her minimum CPA"
         #print("Already at her minimum CPA")
         cpa = calculate_distance(pointA,pointB)
+        cp_position = calculate_cp_position (pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,vectorB_angle_relativ,objectB_speed_relative)
+
+        signe,relative_bearing = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
+        rate_of_closure = calculate_rate_of_closure(objectA_speed,objectB_speed,vectorA_angle,vectorB_angle,relative_bearing)
         
         if d_map == True:
             
             url = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative)
-            return {'cpa': cpa ,'tcpa': 0, 'url': url,'status':status}
+            return {'cpa': cpa ,'tcpa': 0, 'url': url,'status':status,'roc':rate_of_closure}
         
         else :
-            return {'cpa': cpa,'tcpa': 0 }
+            return {'cpa': cpa,'tcpa': 0, 'roc':rate_of_closure}
     
     elif pointA == pointB :
-        
+        cp_position = calculate_cp_position (pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,vectorB_angle_relativ,objectB_speed_relative)
+
+        signe,relative_bearing = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
+        rate_of_closure = calculate_rate_of_closure(objectA_speed,objectB_speed,vectorA_angle,vectorB_angle,relative_bearing)
+
+            
         #print("Objects in the same position")
-        return {'cpa': 0,'tcpa': 0 }
+        return {'cpa': 0,'tcpa': 0, 'roc':rate_of_closure }
    
     else:
                  
@@ -87,14 +97,19 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
             status  = "Ship going away,already at her minimum CPA"
             #print("Ship going away, already at her minimum CPA")
             cpa = round(calculate_distance(pointA,pointB), 3)
+
+            cp_position = calculate_cp_position (pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,vectorB_angle_relativ,objectB_speed_relative)
+
+            signe,relative_bearing = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
+            rate_of_closure = calculate_rate_of_closure(objectA_speed,objectB_speed,vectorA_angle,vectorB_angle,relative_bearing)
             
             if d_map == True:
                 
                 url = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative)
-                return {'cpa': cpa ,'tcpa': 0, 'url': url,'status': status}
+                return {'cpa': cpa ,'tcpa': 0, 'url': url,'status': status, 'roc':rate_of_closure}
                 
             else :
-                return {'cpa': cpa,'tcpa': 0}
+                return {'cpa': cpa,'tcpa': 0, 'roc':rate_of_closure}
         
         else:
             
@@ -102,8 +117,8 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
             cp_position = calculate_cp_position (pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,vectorB_angle_relativ,objectB_speed_relative)
 
             #Is the CPA position ahead or astern the ship's beam ?
-            signe = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
-
+            signe,relative_bearing = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
+            rate_of_closure = calculate_rate_of_closure(objectA_speed,objectB_speed,vectorA_angle,vectorB_angle,relative_bearing)
             cpa = round(calculate_distance(pointA,cp_position)* signe, 3)
             
             tcpa = (calculate_distance(pointB,cp_position) / objectB_speed_relative)*60.0
@@ -113,18 +128,19 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
 
             if d_map == True and posAatcpa == True and posBatcpa == True :                
                 url,coord = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,lonAcpa= lonAcpa,latAcpa= latAcpa, lonBcpa= lonBcpa,latBcpa= latBcpa, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative )
-                return {'cpa': cpa , 'tcpa':tcpa , 'url': url,'coord':coord,'status':' '}
+                return {'cpa': cpa , 'tcpa':tcpa , 'url': url,'coord':coord,'status':' ','roc':rate_of_closure}
 
             elif d_map == True and posAatcpa == True :
                 url = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,lonAcpa= lonAcpa,latAcpa= latAcpa, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative)
-                return {'cpa': cpa , 'tcpa':tcpa , 'url': url,'coord':coord,'status': ' '}
+                return {'cpa': cpa , 'tcpa':tcpa , 'url': url,'coord':coord,'status': ' ','roc':rate_of_closure}
 
             elif d_map == True:
                 url = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative)
-                return {'cpa': cpa , 'tcpa':tcpa , 'url': url,'coord':coord,'status': ' '}
+                return {'cpa': cpa , 'tcpa':tcpa , 'url': url,'coord':coord,'status': ' ','roc':rate_of_closure}
 
             else :
-                return {'cpa': cpa , 'tcpa':tcpa,'status':' '}
+                return {'cpa': cpa , 'tcpa':tcpa,'status':' ','roc':rate_of_closure}
+
 
 def check_ship_going_away(pointA,vectorA_angle,pointB,vectorB_angle_relativ,objectB_speed_relative):
     
@@ -181,9 +197,9 @@ def calculate_CPA_sign(vectorA_angle,pointA, cp_position):
     CPA_point_relative_bearing = calculate_relative_bearing(vectorA_angle, calculate_bearing(pointA, cp_position) )
 
     if (CPA_point_relative_bearing >90) and (CPA_point_relative_bearing <270):
-        return  -1
+        return  -1,CPA_point_relative_bearing
     else:
-        return  1   
+        return  1,CPA_point_relative_bearing   
 
 def calculate_relative_vector(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle):
     
@@ -364,6 +380,10 @@ def get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vecto
 
     return gmap_url,[latAcpa,lonAcpa,latBcpa,lonBcpa] 
 
+def calculate_rate_of_closure(objectA_speed,objectB_speed,vectorA_angle,vectorB_angle,relative_bearing):
+    Vc1 = objectA_speed*cos(relative_bearing-vectorA_angle)
+    Vc2 = objectB_speed*cos(relative_bearing-vectorB_angle)
+    return round(Vc1-Vc2,2)
 if __name__ == "__main__":
 
     import argparse
