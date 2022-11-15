@@ -71,11 +71,15 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
 
         signe,relative_bearing = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
         rate_of_closure = calculate_rate_of_closure(objectA_speed,objectB_speed,vectorA_angle,vectorB_angle,relative_bearing)
+        tcpa = (calculate_distance(pointB,cp_position) / objectB_speed_relative)*60.0
+
+        latAcpa , lonAcpa = calculate_future_position(pointA,objectA_speed*tcpa/60, vectorA_angle)
+        latBcpa , lonBcpa = calculate_future_position(pointB,objectB_speed*tcpa/60, vectorB_angle)
         
         if d_map == True:
             
-            url = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative)
-            return {'cpa': cpa ,'tcpa': 0, 'url': url,'status':status,'roc':rate_of_closure}
+            url,coord = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,lonAcpa= lonAcpa,latAcpa= latAcpa, lonBcpa= lonBcpa,latBcpa= latBcpa, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative )
+            return {'cpa': cpa ,'tcpa': 0, 'url': url,'status':status,'coord':coord,'roc':rate_of_closure}
         
         else :
             return {'cpa': cpa,'tcpa': 0, 'roc':rate_of_closure}
@@ -102,11 +106,18 @@ def ARPA_calculations(objectA, objectB, *args, **kwargs):
 
             signe,relative_bearing = calculate_CPA_sign(vectorA_angle,pointA, cp_position)
             rate_of_closure = calculate_rate_of_closure(objectA_speed,objectB_speed,vectorA_angle,vectorB_angle,relative_bearing)
+
+            cpa = round(calculate_distance(pointA,cp_position)* signe, 3)
+            
+            tcpa = (calculate_distance(pointB,cp_position) / objectB_speed_relative)*60.0
+
+            latAcpa , lonAcpa = calculate_future_position(pointA,objectA_speed*tcpa/60, vectorA_angle)
+            latBcpa , lonBcpa = calculate_future_position(pointB,objectB_speed*tcpa/60, vectorB_angle)
             
             if d_map == True:
                 
-                url = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative)
-                return {'cpa': cpa ,'tcpa': 0, 'url': url,'status': status, 'roc':rate_of_closure}
+                url,coord = get_gmap_url(pointA,objectA_speed, vectorA_angle,pointB,objectB_speed, vectorB_angle,lonAcpa= lonAcpa,latAcpa= latAcpa, lonBcpa= lonBcpa,latBcpa= latBcpa, relvect=vectorB_angle_relativ,relspeed=objectB_speed_relative )
+                return {'cpa': cpa ,'tcpa': 0, 'url': url,'status': status,'coord':coord, 'roc':rate_of_closure}
                 
             else :
                 return {'cpa': cpa,'tcpa': 0, 'roc':rate_of_closure}
@@ -244,10 +255,10 @@ def calculate_bearing(pointA, pointB):
     lat1 = radians(pointA[0])
     lat2 = radians(pointB[0])
      
-    diffLong = radians(pointB[1] - pointA[1])
+    diffLong = radians(pointA[1] - pointB[1])
      
-    x = sin(diffLong) * cos(lat2)
-    y = cos(lat1) * sin(lat2) - (sin(lat1)* cos(lat2) * cos(diffLong))
+    x = sin(diffLong) * cos(lat1)
+    y = cos(lat2) * sin(lat1) - (sin(lat2)* cos(lat1) * cos(diffLong))
      
     initial_bearing = atan2(x,y)
      

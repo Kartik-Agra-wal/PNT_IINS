@@ -10,6 +10,7 @@ import pandas as pd
 import threading
 import sys
 import time
+import math
 from datetime import datetime,timedelta
 t=0
 
@@ -125,7 +126,6 @@ import plotly.graph_objects as go
 import dash
 import dash_daq as daq
 from dash.dependencies import Output, Input
-import dash_bootstrap_components as dbc
 from dash import dcc,html
 from dash import ctx
 from random import random
@@ -133,16 +133,36 @@ import plotly
 
 ls = [30,-30,+60,-60]
 
+def angle_markings(pos,rad):
+    x =[]
+    y = []
+    tex = []
+    tex_pos = []
+    for i in range(0,370,10):
+        x.append(pos[0]+rad*math.cos(math.radians(i)))
+        y.append(pos[1]+rad*math.sin(math.radians(i)))
+        if i!=360:
+            tex.append(str(i))
+            if i<180:
+                tex_pos.append("top center")
+            else:
+                tex_pos.append("bottom center")
+    return x,y,tex,tex_pos
     
 def test(ais_data_list,theta=0,mode = "day"):
     roc = []
     id_list = []
     cpa_dict = dict()
     ship_ls = []
+    name_ls= []
     for msg in ais_data_list:
         if msg["mmsi"] not in id_list:
             ship_ls.append(Ship(msg["mmsi"],(msg["lon"],msg["lat"]),msg["speed"],msg["course"]))
             id_list.append(msg['mmsi'])
+            try:
+                name_ls.append(msg["shipname"])
+            except:
+                name_ls.append(msg['mmsi'])
             if msg['mmsi'] == id_main:
                 tex = "HDG:" + "\t"+  str(msg["heading"]) + "\n" + "\n" +  "SOG:" +"\t"+  str(msg["speed"])+ "\n" + "\n"+ "COG:" + "\t"+ str(msg["course"])
                 tex2 = "LONG:" "\t" + str(msg["lon"]) + "\n" + "\n" + "LAT:" + "\t"  + str(msg["lat"])
@@ -156,7 +176,7 @@ def test(ais_data_list,theta=0,mode = "day"):
     zoom_resolution = 0.0125
     fig = go.Figure(layout_xaxis_range=[objectA.position[0]-zoom_resolution,objectA.position[0]+zoom_resolution],layout_yaxis_range=[objectA.position[1]-zoom_resolution,objectA.position[1]+zoom_resolution])
 
-    fig['layout'].update(width=1000, height=1000, autosize=False)
+    fig['layout'].update(width=1000, height=1000, uirevision = True)
 
     
     
@@ -168,29 +188,49 @@ def test(ais_data_list,theta=0,mode = "day"):
     
    
     if mode == "day":
-        fig.add_shape(type="circle",x0 =objectA.position[0]-r1[2],y0 =objectA.position[1]-r1[2],x1 = objectA.position[0]+r1[2],y1 = objectA.position[1]+r1[2] ,fillcolor=colors[2],opacity=0.2)
+        fig.add_shape(type="circle",x0 =objectA.position[0]-r1[2],y0 =objectA.position[1]-r1[2],x1 = objectA.position[0]+r1[2],y1 = objectA.position[1]+r1[2] ,fillcolor=colors[2],opacity=0.2,)
         fig.add_shape(type="circle",x0 =objectA.position[0]-r1[1],y0 =objectA.position[1]-r1[1],x1 = objectA.position[0]+r1[1],y1 = objectA.position[1]+r1[1] ,fillcolor=colors[1],opacity=0.2)
         fig.add_shape(type="circle",x0 =objectA.position[0]-r1[0],y0 =objectA.position[1]-r1[0],x1 = objectA.position[0]+r1[0],y1 = objectA.position[1]+r1[0] ,fillcolor=colors[0],opacity=0.2)
+        x_a,y_a,tex_a,tex_pos = angle_markings(objectA.position,r1[2])
+        fig.add_trace(go.Scatter(
+        x=x_a,
+        y=y_a,
+
+        mode="markers+text",
+        name="Markers and Text",
+        marker =dict(symbol = 0,color = 'blue', size=1),text=tex_a,textposition=tex_pos,textfont_size = 10),
+    )
     
     else:
         fig.add_shape(type="circle",x0 =objectA.position[0]-r2[2],y0 =objectA.position[1]-r2[2],x1 = objectA.position[0]+r2[2],y1 = objectA.position[1]+r2[2] ,fillcolor=colors[2],opacity=0.2)
         fig.add_shape(type="circle",x0 =objectA.position[0]-r2[1],y0 =objectA.position[1]-r2[1],x1 = objectA.position[0]+r2[1],y1 = objectA.position[1]+r2[1] ,fillcolor=colors[1],opacity=0.2)
         fig.add_shape(type="circle",x0 =objectA.position[0]-r2[0],y0 =objectA.position[1]-r2[0],x1 = objectA.position[0]+r2[0],y1 = objectA.position[1]+r2[0] ,fillcolor=colors[0],opacity=0.2)
-        
-    
+        x_a,y_a,tex_a,tex_pos = angle_markings(objectA.position,r2[2])
+        fig.add_trace(go.Scatter(
+        x=x_a,
+        y=y_a,
+
+        mode="markers+text",
+        name="Markers and Text",
+        marker =dict(symbol = 0,color = 'blue', size=1),text=tex_a,textposition=tex_pos,textfont_size = 10),
+    )            
+
     fig.add_trace(go.Scatter(mode="markers+text",x= [objectA.position[0]],y= [objectA.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectA.heading,color = 'blue', size=15),text=name,textposition="top center"))
-    
+    max_roc = None
+    riskiest_ship = None
     for i in range(0,len(ship_ls)):
         if id_list[i] != id_main:
             id = id_list[i]
             objectB = ship_ls[i]
+            names = name_ls[i]
+            fig.add_trace(go.Scatter(mode="markers+text",x= [objectB.position[0]],y= [objectB.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectB.heading,color = 'orange', size=15),text=names,textposition="top center"))
 
-            fig.add_trace(go.Scatter(mode="markers+text",x= [objectB.position[0]],y= [objectB.position[1]] ,marker =dict(symbol = 53,angle = 90 - objectB.heading,color = 'orange', size=15),text=id,textposition="top center")),
-
-            results = ARPA_calculations(objectA, objectB,m=True, posAatcpa = True, posBatcpa= True)
-
+            results = ARPA_calculations(objectA, objectB,m=False, posAatcpa = True, posBatcpa= True)
+            if max_roc is None or results['roc'] > max_roc:
+                    max_roc = results['roc']
+                    riskiest_ship = objectB
             roc.append([id,round(results['roc'],2)])
-            #print(objectB.id)
+
             templis = []
             newlis = []
             for alpha in ls:
@@ -201,7 +241,7 @@ def test(ais_data_list,theta=0,mode = "day"):
                 tempobject.heading -=alpha
             if t == 0:
 
-                cpa_dict[id] = [abs(results['cpa']),round(results['tcpa'],2),abs(templis[0]['cpa']),round(templis[0]['tcpa'],2),abs(templis[1]['cpa']),round(templis[1]['tcpa'],2),abs(templis[2]['cpa']),round(templis[2]['tcpa'],2),abs(templis[3]['cpa']),round(templis[3]['tcpa'],2)]
+                cpa_dict[names] = [abs(results['cpa']),round(results['tcpa'],2),abs(templis[0]['cpa']),round(templis[0]['tcpa'],2),abs(templis[1]['cpa']),round(templis[1]['tcpa'],2),abs(templis[2]['cpa']),round(templis[2]['tcpa'],2),abs(templis[3]['cpa']),round(templis[3]['tcpa'],2)]
             else:
                 tcp = round(results['tcpa'],2)
                 min = int(tcp//1)
@@ -214,7 +254,39 @@ def test(ais_data_list,theta=0,mode = "day"):
                     se = round((tc%1)*60)
                     
                     newlis.append((datetime.now() + timedelta(minutes=mi,seconds = se)).time().replace(microsecond=0))
-                cpa_dict[id] = [abs(results['cpa']),ti,abs(templis[0]['cpa']),newlis[0],abs(templis[1]['cpa']),newlis[1],abs(templis[2]['cpa']),newlis[2],abs(templis[3]['cpa']),newlis[3]]
+                cpa_dict[names] = [abs(results['cpa']),ti,abs(templis[0]['cpa']),newlis[0],abs(templis[1]['cpa']),newlis[1],abs(templis[2]['cpa']),newlis[2],abs(templis[3]['cpa']),newlis[3]]
+    
+    riskiest = ARPA_calculations(objectA, riskiest_ship,m=True, posAatcpa = True, posBatcpa= True)
+    try:
+        coords = riskiest['coord']
+        fig.add_trace(go.Scatter(mode="markers+text",x= [coords[0]],y= [coords[1]] ,marker =dict(symbol = 53,angle = 90 - objectA.heading,color = 'black', size=15)))
+        fig.add_trace(go.Scatter(mode="markers+text",x= [coords[2]],y= [coords[3]] ,marker =dict(symbol = 53,angle = 90 - riskiest_ship.heading,color = 'red', size=15)))
+        fig.add_shape(type='line',
+                x0=objectA.position[0],
+                y0=objectA.position[1],
+                x1=coords[0],
+                y1=coords[1],
+                line=dict(color='black',dash="dot"),
+                xref='x',
+                yref='y')
+
+        fig.add_shape(type='line',
+                x0=riskiest_ship.position[0],
+                y0=riskiest_ship.position[1],
+                x1=coords[2],
+                y1=coords[3],
+                line=dict(color='magenta',dash="dot"),
+                xref='x',
+                yref='y')
+    
+        
+
+    except:
+        pass
+
+    
+    
+    
     rocdf = pd.DataFrame(roc,columns = ["Ship","ROC"])
 
     rocdf=rocdf.sort_values(by='ROC', ascending=False)
@@ -240,7 +312,7 @@ def test(ais_data_list,theta=0,mode = "day"):
                 fill_color='lavender',
                 align='left'))
     ])
-    fig2.update_layout(title=dict(text="<b>SHIP LIST</b>"))
+    fig2.update_layout(title=dict(text="<b>SHIP LIST</b>"),uirevision = True)
     fig3 = go.Figure(data=[go.Table(
         header=dict(values=list(rocdf.columns),
                     fill_color='paleturquoise',
@@ -250,8 +322,8 @@ def test(ais_data_list,theta=0,mode = "day"):
                 align='left'))
     ])
     
-    fig3.update_layout(title=dict(text="<b>Priority List</b>"))
-
+    fig3.update_layout(title=dict(text="<b>Priority List</b>"),uirevision = True )
+    
     return fig,fig2,fig3    
 
 
